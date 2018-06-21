@@ -1,4 +1,6 @@
-config/
+/config
+/vendor
+
 Homestead.json
 Homestead.yaml
 npm-debug.log
