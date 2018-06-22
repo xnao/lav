@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d33c2a30-13b8-4de4-b76a-343ba503a501" name="Default" comment="add new test file a.html">
+    <list default="true" id="d33c2a30-13b8-4de4-b76a-343ba503a501" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -409,11 +409,18 @@
       <option name="project" value="LOCAL" />
       <updated>1529665547625</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="add new test file a.html">
+      <created>1529665566890</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1529665566890</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="15037000" />
+    <option name="totallyTimeSpent" value="15045000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
