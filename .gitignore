@@ -1,6 +1,6 @@
 /config
 /vendor
-/.idea
+/.idea/workspace.xml
 Homestead.json
 Homestead.yaml
 npm-debug.log

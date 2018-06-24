@@ -9,7 +9,7 @@ class EntryController extends Controller
 {
     //
     public function loginForm(){
-        echo "HELLO ADMIN";
+        return view('admin.entry.login');
 
     }
 }
