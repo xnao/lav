@@ -8,14 +8,11 @@
 /**
  * 针对后台的路由
  */
-Route::get('bc',function(){
 
-    return 'hdphp';
-}
-);
-Route::group(['prefix'=>'admin'],function(){
+Route::group(['prefix'=>'admin','namespace'=>'admin'],function(){
 
      Route::get('abc',function(){
          return "HDCMS";
      });
+     Route::get('/login','EntryController@loginForm'); //admin后台登陆
 });
