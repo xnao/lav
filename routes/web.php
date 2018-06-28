@@ -149,6 +149,84 @@ Route::get('orm4','studentController@orm4');
 Route::get('section1',['uses'=>'studentcontroller@section1']);
 Route::any('urlTest',['as'=>'urlAlias','uses'=>'studentController@urlTest']);
 
+/***************************UPLOADING TESTING******************/
+Route::any('upload',['uses'=>'studentController@upload']);
+
+/****************MAILING TESTING*******************/
+Route::any('mail',['uses'=>'studentController@mail']);
+
+/*******************CACHE TESTING******************/
+Route::any('cacheFile1','studentController@cacheFile1');
+
+/**************LARAVEL DEBUG & LOG TESTING****************/
+Route::get('debug','studentController@error');
+
+/****************LARAVEL QUEUE TESTING********************/
+Route::get('queue','studentController@queue');
+
+/**
+ * CONTROLLER STUDY
+ */
+/*********************CONTROLLER - REQUEST**********/
+Route::any('request1','studentController@request1');
+Route::any('student/request1','studentController@request1');
+
+/********************CONTROLLER - SESSION**********/
+//Route::any('session1','studentController@session1');
+//Route::any('session2','studentController@session2');
+//in normal, to use session need to states session_start(),
+//in LARAVEL, there is a Kernel.php/web middleware,
+//so need to add web in the router
+//with add web to the middleware router, the session is ready to go
+
+Route::group(['middleware'=>['web']],function(){
+    Route::any('session1','studentController@session1');
+    Route::any('session2',['as'=>'jump', 'uses'=>'studentController@session2']);
+});
+
+/**************CONTROLLER - RESPONSE******************/
+Route::any('response',['uses'=>'studentController@response']);
+
+/**************CONTROLLER - MIDDLEWARE*****************/
+//promo page
+Route::any('activity0','studentController@activity0');
+
+//activity page
+//Route::any('activity1','studentController@activity1');
+//Route::any('activity2','studentController@activity2');
+
+//activity finished page
+Route::any('activity3','studentController@activity3');
+//use the scenario middleware
+Route::group(['middleware'  =>  ['activity']], function(){
+    Route::any('activity1','studentController@activity1');
+    Route::any('activity2','studentController@activity2');
+
+});
+
+/***************LARAVEL FORM TESING************************/
+
+//to use session to pass error message by flashMessage with()
+Route::group(['middleware'=>'web'],function(){
+
+    Route::get('index','studentController@index');
+    Route::any('create','studentController@create');
+    Route::post('create_submit','studentController@create_submit');
+    Route::any('edit/{id}','studentController@edit');
+    Route::get('details/{id}','studentController@details');
+    Route::any('del/{id?}','studentController@del');
+
+
+});
+
 
 
 include  __DIR__.'/admin/web.php';//包含admin的路由
+
+Auth::routes();
+
+Route::get('/home', 'HomeController@index')->name('home');
+
+Route::any('cacheFile2','studentController@cacheFile2');
+
+

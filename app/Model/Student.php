@@ -7,16 +7,37 @@ use Illuminate\Database\Eloquent\Model;
 class Student extends Model
 {
     //bind table
-    protected $table = 'student';
+    protected $table = 'students';
     //bind pk
     protected $primaryKey = 'id';
     //weather fillin the timestamps when add the data, default true
     public $timestamps = true;
-    //set allowed fields to  batch data input
-    protected $fillable = ['name','age'];
+    //set allowed fields to  batch data input e.g. create()
+    protected $fillable = ['name','age','sex'];
     //set fields not allowed for batch data input
-    protected $guarded = ['sex']; //when set sex is not allowed for data batch input, then the value will be ignored and use the field default value
+    protected $guarded = ['sex']; //when set sex is not allowed for data batch input,
+    // then the value will be ignored and use the field default value
 
+    //use model to processing data
+    const SEX_UNKNOW = 3;
+    const  SEX_MALE = 1;
+    const SEX_FEMALE = 0;
+
+    //processing sex data
+    public function sex($ind=null){
+        $arr = [
+            self::SEX_UNKNOW => '未知',
+            self::SEX_MALE =>'男',
+            self::SEX_FEMALE => '女',
+        ];
+
+
+        if($ind !==null){
+            return array_key_exists($ind,$arr)?$arr[$ind]:$arr[self::SEX_UN];
+        }
+
+        return $arr;
+    }
 
 
     /**

@@ -2,13 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\sendEmail;
 use App\Model\Student;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class StudentController extends Controller
 {
+
     /**
      * insert data into table
      */
@@ -332,7 +340,8 @@ class StudentController extends Controller
         /**
          * use PK to delete
          */
-        echo Student::destroy(6,7,8,9);//use PK to delete, return the number of rows been deleted
+        echo Student::destroy(6,7,8,9);//use PK to delete,
+        // return the number of rows been deleted
         //or use array to destroy
         echo Student::destroy([4,5]);
         //if the row doesn't exist, will not lead to error
@@ -376,5 +385,603 @@ class StudentController extends Controller
          return "URLTEST";
 
     }
+
+
+    /**
+     * file upload testing
+     */
+    public function upload(Request $request){
+        if($request->isMethod('POST')){
+//            var_dump($_FILES);
+            //get the uploaded file
+            $file = $request->file('source');
+            //source is the name of the form-control name
+
+            //check if the upload is success
+            if($file->isValid()){
+                $originName = $file->getClientOriginalName();//get uploaded file org name
+                $mime       = $file->getClientMimeType();//get uploaded file's mime
+                $ext       = $file->getClientOriginalExtension();//get uploaded file's extension
+                $realPath   = $file->getRealPath();//temp file absolute path
+
+                //generate the new file name
+                $fileName = date('Y-m-d-H-i-s').'-'.uniqid().'.'.$ext;
+
+                $bool = Storage::disk('uploads')->put($fileName,file_get_contents($realPath));
+
+                dd($bool);
+
+
+            }
+
+
+
+
+            exit;
+        }
+        return view('student/upload');
+
+    }
+
+
+    /**
+     * mailing funciton testing
+     */
+    public function mail(){
+        /**
+         * send raw mail
+         */
+//        Mail::raw('mainContent',function($message){
+//            $message->from('m18736277539@163.com','imooc');
+//            $message->subject('this is laravel mailing ');
+//            $message->to('m18736277539@163.com');
+//        });
+
+        /**
+         * send HTML mail
+         * ['name']=>'whoisthis' is used for $name in  mail.blade.php
+         */
+        Mail::send('student/mail',['name'=>'whoisthis'],function($message){
+            $message->from('m18736277539@163.com','imooc');
+            $message->subject('this is laravel mailing ');
+            $message->to('m18736277539@163.com');
+        });
+
+    }
+
+    /**
+     * cache testing
+     * by using: put() add() forever() has() get() pull() forget()
+     * put(key,value,expireTimeInt): set cache value, will rewrite if the key exist
+     * add(key,value,expireTimeInt): set cache value return true,return false if key exist
+     * forever():
+     */
+    //testing file cache1: used for add/set cache
+    public function cacheFile1(){
+        //use put() method to set key=key1,value=value1 for 10min?
+        $a = Cache::put('key1','value1',10);
+
+        $b= Cache::put('key1','value100',10);
+
+        //use add() method to set/add key=key2,value=value2 for 10min,
+        //**Note: add() if try to add value to existing key will cause failure return false
+
+        $c = Cache::add('key1','value10',10);//return false as the key1 already exist
+        $d = Cache::add('key2','value2',10);//return true as successed
+
+        //use forever(): permanent store the cache
+        $e = Cache::forever('key3','value3');
+
+
+
+
+
+    }
+    //testing file cache2: used for get cache value
+    public function cacheFile2(){
+
+        //use get(): to get cache value by defined key
+        $val = Cache::get('key1');
+        var_dump($val);
+
+        //use has():check if the cache key exist
+        if(Cache::has('key3')){
+            $val = Cache::get('key3');
+            var_dump($val);
+        }else{
+            echo "key3 cache not exist";
+        }
+
+        //use pull(): to get cache value by key AND destroy THE cache key
+        $key3 = Cache::pull('key3');
+        var_dump($key3);
+        var_dump(Cache::get('key3'));
+
+        //use forget(): delete cache by key return bool
+        $bl = Cache::forget('key2');
+
+
+
+    }
+
+    //laravel DEBUG & log Testing
+    public function error(){
+
+        //create log
+        Log::info('this is info level log');
+        Log::warning('this is warning level log');
+
+        //create log with array value
+        log::error('this is array, ERROR level',['name'=>'bo','age'=>18]);
+
+
+
+
+
+
+        //debug tesing1
+        $student = null;
+        if($student==null){
+            abort('599','this is the log testing');
+            //abort()will look to the resources/errors/code.blade.php to display,e.g. 503.balde.php
+            //if the file doesn't exist, the system will display the system default page
+            //NOTE: has to use the common code, can not create you own error code
+        }
+
+
+        //debug tesing2
+//        $name = 'david';
+        var_dump($name);
+    }
+
+    //queue testing
+    //push the job into queue
+    public function queue(){
+
+        //to add the job into database, need to visit the page
+
+        //push the job into queue on the database/jobs table
+        dispatch(new sendEmail('m18736277539@163.com'));
+
+        //to execute the job, use php artisan
+//        php artisan queue:listen
+
+
+    }
+
+    //Controller study: request
+    public function request1(Request $request){
+        //get URL value
+        //URL: http://lav.com/request1?name=sean
+
+        //get URL name value
+        echo $request->name;//output: sean
+
+        //get value by key
+        echo $request->input('name'); //output:sean
+
+        //get the value by key and set default value iff the key is not exist
+        echo $request->input('sex','default');
+echo "<hr />";
+
+        //use has(): to check if the value exist
+        echo $request->has('name');//1
+        echo $request->has('unknow');//empty
+echo "<hr />";
+        if($request->has('name13')){
+            echo $request->name;
+        }else{
+            echo "not exist";
+        }
+echo "<hr />";
+        //use all(): get all the parameters, return array
+        $all = $request->all();
+        var_dump($all);
+
+        /**
+         * check request type
+         */
+        echo $request->method();
+echo "<hr />";
+        //use isMethod(): to check if the method is pre-defined method
+        if($request->isMethod('get')){//is the method is get/GET method
+            echo "yes, it is get method";
+        }else{
+            echo "NOT GET MEthod";
+        }
+
+        //ajax(): check if is ajax request
+        $ajax = $request->ajax();//return bool
+
+        //is(): to check the request path fullfill the router rule
+        // return bool
+        $is = $request->is('student/*');
+        //Route::any('request1','studentController@request1'); return FALSE
+        //Route::any('request1','studentController@request1'); return TRUE
+echo "<hr />";
+        //get current URL
+        echo $request->url();
+
+
+
+
+
+
+
+    }
+
+    //Controller study: session1
+    //set session
+    public  function session1(Request $request){
+        /**1.
+         * HTTP request session(); method
+         */
+
+        //put('key','value'): to set session value
+        $request->session()->put('key1','value1');
+
+        /**2.
+         * session(): helper method
+         */
+        session()->put('key2','value2');
+
+        /**3.
+         * use session class to create session
+         */
+        Session::put('key3','value3');
+
+        //put array into session
+        Session::put(['key4'=>'value4','key5'=>['a','b','c']]);
+
+        //push value into session_array
+        Session::push('k1','v1');
+        Session::push('k1','v2');
+
+        //forget(): remove one key from session
+        Session::forget('key5');
+
+        //flush(): empty session
+        Session::flush();
+
+        //flash(): only exist to the first visit,
+        //after the first read/visit, it will be destroyed
+        Session::flash('key7','key7');
+
+
+
+    }
+
+    //Controller study: session2
+    //get session
+    public function session2(Request $request){
+
+        //get('key'): get session value by key
+        echo $request->session()->get('key1');
+        echo "<hr />";
+        //use helper method to get value
+        echo session()->get('key2');
+        //use Session class
+        echo "<hr />";
+        echo Session::get('key3');
+
+        //use Session class with default value if session not exist
+        echo "<hr />";
+        echo Session::get('key4','default_value4');
+
+        //get key4, key5
+        echo Session::get('key4');
+        var_dump(Session::get('key5'));
+
+        //get session_array
+        var_dump(Session::get('k1'));
+
+        //get session value then delete, also can set default value if not exist
+        var_dump(Session::pull('k1','default_value'));
+
+        //get all the values in session
+        var_dump(Session::all());
+echo "<hr />";
+        //has(): use has to check if the key-value exist
+        if(Session::has('key5')){
+            var_dump(Session::get('key5'));
+        }else{
+            echo "NOT KEY5 NO";
+        }
+
+        //get flash session key7
+        var_dump(Session::get('key7'));
+
+
+    }
+
+    //Controller study: response
+    //response Type: string, view, json, redirect
+
+    public function response(){
+
+        //Type:json
+        $data = [
+            'errCode'   => 0,
+            'errMsg'    => 'success',
+            'data'      => 'sean',
+        ];
+        //convert $data into json string
+//        return response()->json($data);
+
+        //Type: redirect
+//        return redirect('session2');
+        //redirect with data
+//        return redirect('session2')->with('message','this is the message');
+        //NOTE::message will be stored in session with key: message
+        //NOTE:: this session['message'] is a flash session, only show once
+
+        //use action() to redirect, also can with flash message
+//        return redirect()->action('studentController@session2')->with('flash-message','this is flash-message with action function');
+
+        //use route() to redirect
+//        return redirect()->route('jump')->with('route','this is route flash message');
+
+        //back to previous page
+        return redirect()->back()->with('back','this is back flash message');
+
+    }
+
+    //Controller study: middleware
+    /**
+     * scenario :
+     * there is a activity only begins on the center date, before the date,
+     * before the activity begins, all the visits will be redirected to the promo page
+     *
+     * to perform this scenario will needs following skills
+     * create middleware
+     * register middleware
+     * use middleware
+     * pre/post use middleware
+     */
+
+    //promo page of the activity
+    public function activity0(){
+//        echo date("Y-m-d",time());//2018-06-26
+        return "the promo is about to begin";
+    }
+
+    public function activity1(){
+        return "activity is under going";
+    }
+
+    public function activity2(){
+        return "thanks for been involved";
+    }
+
+    public function activity3(){
+        return "activity has successfully finished";
+    }
+
+    /**
+     * FORM TESTING
+     */
+
+    //student list page
+    public function index(){
+        //get data from database
+//        $students = Student::get();
+
+        //use paginate() for paging
+        $students = Student::paginate(2);
+
+//        dd($students);//NOTE students is an object of student model class
+
+
+        return view('student/index',
+            [
+             'students'  =>  $students,
+
+
+            ]
+        );
+    }
+
+    //display create page
+    public function create(Request $request){
+        if($request->isMethod('GET')){
+
+            return view('student/create',
+                ['students'=>new Student()] //put Student Object into template variable(object) student
+            );
+
+        }elseif ($request->isMethod('POST')){
+            //get form submit value
+            $data = $request->input('student');
+
+            //USE CONTROLLER TO VALIDATE THE INPUT
+            //as in the form is student[name] array, so here is student.name
+            //if in the form is name, then here is name
+            //unique:tableName,tableColumn
+            //NOTE: with controller, once the template has set the old() value, don't need to
+//            $this->validate($request,[
+//                'student.name'      =>  'required|between:5,10|unique:students,name',
+//                'student.age'      =>  'required|integer|between:18,100',
+//                'student.sex'      =>  'required|max:3',
+//                'test'             =>   'required|max:3',
+//            ],[
+//                'required'      => ':attribute 为必填项', //:attribute is the placeholder
+//                'min'           => ':attribute 最少为:min',
+//                'max'           => ':attribute 最多为:max',
+//                'integer'       => ':attribute 必须为整数',
+//                'between'       => ':attribute 在:min与:max之间',
+//            ],[
+//                'student.name' => '姓名',
+//                'student.age' => '年龄',
+//                'student.sex' => '性别',
+//                'test'        => '测试',
+//
+//            ]);
+
+            /**
+             * for the validator
+             * if data pass the valid, the code will continue to run
+             * if it falls, the laravel framework will throw an exception
+             * the exception will be auto-capture and represent on the last page
+             */
+
+
+            //USE VALIDATOR CLASS TO VALIDATE INPUT
+            //create the my_validator
+            //unique:tableName,tableColumn
+
+            $my_validator = Validator::make($request->input(),
+                [//rules
+                    'student.name'      =>  'required|between:5,10|unique:students,name',
+                    'student.age'       =>  'required|integer|between:18,100',
+                    'student.sex'       =>  'required|integer|between:0,3',
+                    'test'              =>  'required',
+                ],
+                [//rule explain
+                    'required'      =>  ':attribute 必填',
+                    'between'       =>  ':attribute 的值必须在:min ~ :max之间',
+                    'integer'       =>  ':attribute 的值必须为整数',
+                ],
+                [//variable explain
+                    'student.name'      =>  '学生姓名',
+                    'student.age'       =>  '学生年龄',
+                    'student.sex'       =>  '学生性别',
+                    'test'              =>  '测试',
+
+                ]
+            );
+
+            if($my_validator->fails()){
+                //validate fails
+                //back to previous page with errors
+                //withInput(): keep the user input data
+                return redirect()->back()->withErrors($my_validator)->withInput();
+            }
+
+
+
+
+            if(Student::create($data)!==false){
+                //data create success
+                return redirect('index')->with('message','success');
+            }else{
+                return redirect()->back()->with('message','failed');//redirect to the previous page
+            }
+
+        }
+
+    }
+
+    //processing create student form submition
+    public function create_submit(Request $request){
+      //only processing POST request
+        if($request->isMethod('POST')){
+
+            //get post form data
+            $input = $request->input('student');
+
+            var_dump($input);
+
+            //insert data into database
+
+            Student::create($input);
+
+
+
+        }else{
+            return view('student/create');
+        }
+
+
+    }
+
+
+    //display & processing edit student info
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function edit(Request $request,$id=null){
+        if($request->isMethod('post')){
+
+
+
+
+            //processing editing
+            $v = $this->validate($request,
+                [//rules
+                    'student.name'      =>  'required|unique:students,name,'.$id.',id|between:3,10',
+                    'student.age'       =>  'required|between:18,99|integer',
+                    'student.sex'       =>  'required',
+
+                ],
+                [//explain rules to front user
+                    'required'      =>  ':attribute must fill in',
+                    'unique'        =>  ':attribute already has been taken, please choose another :attribute',
+                    'between'       =>  'the :attribute must between :min and :max',
+                    'integer'       =>  ':attribute must fillin with integer',
+
+                ],
+                [//translate variable name into human understanding name
+                    'student.name'  =>  'Student Name',
+                    'student.age'   =>  'Student Age',
+                    'student.sex'   =>  'Student Gender',
+
+
+                ]);
+            $postData = $request->post('student');
+
+            $update = Student::where('id','=',$id)
+            ->update($postData);
+            if($update){
+                return redirect('index')->with('message','success');
+            }
+
+
+
+
+
+
+
+        }elseif($request->isMethod('get')){
+            //display edit page
+            if(isset($id) && $id !==null){
+                //get student
+                $student = Student::find($id);
+
+                return view('student/edit',
+                    [
+                        'student' =>$student,
+
+                    ]
+                );
+            }
+
+        }
+
+    }
+
+    //del function
+    public function del($id=null){
+        if(Student::destroy($id)){
+            return redirect('index')->with('message','success');
+        }else{
+            return redirect()->back()->with('message','failed');
+        }
+    }
+
+    //show details of student
+    public function details($id=null){
+       //get student info by $id
+        $student = Student::find($id);
+        return view('student/details',
+            [
+                'student'=>$student,
+
+            ]
+        );
+    }
+
+
 
 }
